@@ -50,7 +50,7 @@ class Game(commands.Bot):
             info = mongoHelper.get_user_info(ctx.author.id)
             embed = discord.Embed(title="Error", description="You already have an account!",
                                   color=discord.Color.red())
-            embed.set_author(name=ctx.author.name, icon_url=ctx.author.avatar)
+            embed.set_author(name=ctx.author.name, icon_url=ctx.author.display_avatar)
             await ctx.send(embed=embed)
 
         @start.error
@@ -59,7 +59,7 @@ class Game(commands.Bot):
                 embed = discord.Embed(title="Success!",
                                       description="Successfully created your account. Please see /help to start!",
                                       color=discord.Color.green())
-                embed.set_author(name=ctx.author.name, icon_url=ctx.author.avatar)
+                embed.set_author(name=ctx.author.name, icon_url=ctx.author.display_avatar)
                 mongoHelper.create_user(ctx.author.id)
                 await ctx.send(embed=embed)
 
@@ -77,7 +77,7 @@ class Game(commands.Bot):
                 resources_message += k.title().replace("_", " ") + ": " + helper.human_format(v) + "\n"
             embed.add_field(name="Resources",
                             value=resources_message)
-            embed.set_author(name=ctx.author.name, icon_url=ctx.author.avatar)
+            embed.set_author(name=ctx.author.name, icon_url=ctx.author.display_avatar)
             await ctx.send(embed=embed)
 
         @self.hybrid_command(name="inventory", description="See someone's inventory!", aliases=["inv"])
@@ -91,7 +91,7 @@ class Game(commands.Bot):
                 for k2, v2 in v.items():
                     message += helper.human_format(int(k2)) + ": " + helper.human_format(int(v2)) + "\n"
                 embed1.add_field(name=k.title().replace("_", " "), value=message)
-            embed1.set_author(name=ctx.author.name, icon_url=ctx.author.avatar)
+            embed1.set_author(name=ctx.author.name, icon_url=ctx.author.display_avatar)
             await ctx.send(embed=embed1, view=interaction)
 
         @self.hybrid_command(name="daily", description="Get daily loot")
@@ -105,7 +105,7 @@ class Game(commands.Bot):
             embed = discord.Embed(title="Daily received",
                                   description="Here's what you got:\n1x 10k Wood\n1x 10k Stone\n1x 10k Ore\n1x 5k Gold",
                                   color=discord.Color.green())
-            embed.set_author(name=ctx.author.name, icon_url=ctx.author.avatar)
+            embed.set_author(name=ctx.author.name, icon_url=ctx.author.display_avatar)
             await ctx.send(embed=embed)
 
         @self.hybrid_command(name="train", description="Train some soldiers!")
@@ -114,7 +114,7 @@ class Game(commands.Bot):
             app_commands.Choice(name="Archer", value="archer"),
             app_commands.Choice(name="Horse Man", value="horse_man"),
         ])
-        async def train(ctx, amount: int, type):
+        async def train(ctx, type, amount: discordHelper.numberConverter):
             id = ctx.author.id
             cost = {k: v * amount for k, v in soldiers[type]["cost"].items()}
             await ctx.send(cost)
@@ -135,7 +135,7 @@ class Game(commands.Bot):
             app_commands.Choice(name="Gold", value="gold"),
             app_commands.Choice(name="Crystalized Blood", value="crystalized_blood")
         ])
-        async def use(ctx, type, amount: int):
+        async def use(ctx, type, amount: discordHelper.numberConverter):
             id = ctx.author.id
             total_value = sum([int(k) * v for k, v in mongoHelper.get_dict(id, "resources_inv", type).items()])
             await ctx.send("your total value is " + str(total_value))
@@ -166,19 +166,25 @@ class Game(commands.Bot):
                                   description="You have already used this command. You can use it again in " + helper.seconds_to_time(
                                       error.retry_after) + ".", color=discord.Color.red(),
                                   timestamp=datetime.datetime.now() + datetime.timedelta(seconds=error.retry_after))
-            embed.set_author(name=ctx.author.name, icon_url=ctx.author.avatar)
+            embed.set_author(name=ctx.author.name, icon_url=ctx.author.display_avatar)
             await ctx.send(embed=embed)
         elif isinstance(error, commands.MissingRole):
             embed = discord.Embed(title="Error", description="You do not have the roles to use this command.",
                                   color=discord.Color.red())
-            embed.set_author(name=ctx.author.name, icon_url=ctx.author.avatar)
+            embed.set_author(name=ctx.author.name, icon_url=ctx.author.display_avatar)
+            await ctx.send(embed=embed)
+        elif isinstance(error, helper.InvalidNumberFormatError):
+            embed = discord.Embed(title="Error", description="Invalid number. Please enter a positive number. You can "
+                                                             "also use suffixes such as K, M, B, and T to abbreviate "
+                                                             "numbers.", color=discord.Color.red())
+            embed.set_author(name=ctx.author.name, icon_url=ctx.author.display_avatar)
             await ctx.send(embed=embed)
         elif isinstance(error, mongoHelper.NoAccountCreatedError) and ctx.command.name != "start":
             embed = discord.Embed(title="Error",
                                   description="This person has not created an account yet. Start the game with "
                                               "`/start`.",
                                   color=discord.Color.red())
-            embed.set_author(name=ctx.author.name, icon_url=ctx.author.avatar)
+            embed.set_author(name=ctx.author.name, icon_url=ctx.author.display_avatar)
             await ctx.send(embed=embed)
         else:
             raise error

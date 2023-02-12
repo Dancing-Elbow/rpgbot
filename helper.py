@@ -1,8 +1,12 @@
+import math
+
 from discord.ext import commands
 
 
 class InvalidNumberFormatError(commands.CommandError):
     pass
+
+
 def seconds_to_time(seconds):
     seconds = -round(-seconds)
     hours = round(seconds / 3600 - .5)
@@ -18,13 +22,14 @@ def seconds_to_time(seconds):
         message += f"{seconds} seconds"
     return message
 
+
 def number_format(str):
     mag = ['', 'K', 'M', 'B', 'T']
     if str.isnumeric():
         num = int(str)
     elif str[:-1].isnumeric():
         if str[-1].upper() in mag:
-            num = str[:-1] * mag.index(str[-1].upper())
+            num = int(str[:-1]) * math.pow(1000, mag.index(str[-1].upper()))
         else:
             raise InvalidNumberFormatError
     else:
@@ -32,6 +37,7 @@ def number_format(str):
     if num > 0:
         return num
     raise InvalidNumberFormatError
+
 
 def human_format(num):
     num = float('{:.3g}'.format(num))
